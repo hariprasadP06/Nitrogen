@@ -13,59 +13,57 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Customers{
-  id String @id @default(uuid()) @unique
-  name String
-  email String @unique
-  phoneNumber String  @unique
-  address String
-  order Orders[]
+model Customers {
+  id          String   @id @unique @default(uuid())
+  name        String
+  email       String   @unique
+  phoneNumber String   @unique
+  address     String
+  order       Orders[]
 }
 
-model Resturants{
-  id String @id @default(uuid())
-  name String
-  location String
+model Resturants {
+  id         String       @id @default(uuid())
+  name       String
+  location   String
   menu_items Menu_Items[]
-  order Orders[]
+  order      Orders[]
 }
 
-model Menu_Items{
-  id String @id @default(uuid()) @unique
-  resturant Resturants @relation(fields: [resturantId], references: [id])
+model Menu_Items {
+  id          String        @id @unique @default(uuid())
+  resturant   Resturants    @relation(fields: [resturantId], references: [id])
   resturantId String
-  name String 
-  price Decimal
-  isAvailable Boolean @default(true)
-  order Order_Items[]
+  name        String
+  price       Decimal
+  isAvailable Boolean       @default(true)
+  order       Order_Items[]
 }
 
-model Orders{
-  id String @id @default(uuid()) @unique
-  customer Customers @relation(fields: [customerId], references: [id])
-  customerId String
-  resturant Resturants @relation(fields: [resturantId], references: [id])
+model Orders {
+  id          String        @id @unique @default(uuid())
+  customer    Customers     @relation(fields: [customerId], references: [id])
+  customerId  String
+  resturant   Resturants    @relation(fields: [resturantId], references: [id])
   resturantId String
-  status Status @default(Placed)
-  totalPrice Decimal
-  orderTime DateTime @default(now())
-  order Order_Items[]
+  status      Status        @default(Placed)
+  totalPrice  Decimal
+  orderTime   DateTime      @default(now())
+  order       Order_Items[]
 }
 
-model Order_Items{
-  id String @id @default(uuid()) @unique
-  order Orders @relation(fields: [orderId], references: [id] )
-  orderId String
-  menuItem Menu_Items @relation(fields: [menuItemId], references: [id])
-  menuItemId String 
-  quantity Int
+model Order_Items {
+  id         String     @id @unique @default(uuid())
+  order      Orders     @relation(fields: [orderId], references: [id])
+  orderId    String
+  menuItem   Menu_Items @relation(fields: [menuItemId], references: [id])
+  menuItemId String
+  quantity   Int
 }
 
-enum Status{
+enum Status {
   Placed
   Preparing
   Completed
   Cancelled
 }
-
-
