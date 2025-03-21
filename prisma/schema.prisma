@@ -22,7 +22,7 @@ model Customers {
   order       Orders[]
 }
 
-model Resturants {
+model Restaurants {
   id         String       @id @default(uuid())
   name       String
   location   String
@@ -31,25 +31,25 @@ model Resturants {
 }
 
 model Menu_Items {
-  id          String        @id @unique @default(uuid())
-  resturant   Resturants    @relation(fields: [resturantId], references: [id])
-  resturantId String
-  name        String
-  price       Decimal
-  isAvailable Boolean       @default(true)
-  order       Order_Items[]
+  id           String        @id @unique @default(uuid())
+  restaurant   Restaurants   @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  name         String
+  price        Decimal
+  isAvailable  Boolean       @default(true)
+  order        Order_Items[]
 }
 
 model Orders {
-  id          String        @id @unique @default(uuid())
-  customer    Customers     @relation(fields: [customerId], references: [id])
-  customerId  String
-  resturant   Resturants    @relation(fields: [resturantId], references: [id])
-  resturantId String
-  status      Status        @default(Placed)
-  totalPrice  Decimal
-  orderTime   DateTime      @default(now())
-  order       Order_Items[]
+  id           String        @id @unique @default(uuid())
+  customer     Customers     @relation(fields: [customerId], references: [id])
+  customerId   String
+  restaurant   Restaurants   @relation(fields: [restaurantId], references: [id])
+  restaurantId String
+  status       Status        @default(Placed)
+  totalPrice   Decimal
+  orderTime    DateTime      @default(now())
+  order        Order_Items[]
 }
 
 model Order_Items {
