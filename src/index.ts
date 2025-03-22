@@ -17,23 +17,27 @@ app.get("/", (c) => {
 
 // CUSTOMER REGISTRATION
 app.post("/Customer/Register", async (c) => {
-  const {name , email, phoneNumber, address} = await c.req.json();
+  try {
+    const { name, email, phoneNumber, address } = await c.req.json();
 
-  const customer = await prisma.customers.create({
-    data: {
-      name,
-      email,
-      phoneNumber,
-      address,
-    },
-  });
+    
+    const existingCustomer = await prisma.customers.findUnique({
+      where: { phoneNumber }
+    });
 
-  if(!name || !email || !phoneNumber || !address){
-    return c.json({message:"ALL FIELDS ARE REQUIRED"});
+    if (existingCustomer) {
+      return c.json({ error: "Phone number already registered" }, 400);
+    }
+    const customer = await prisma.customers.create({
+      data: { name, email, phoneNumber, address }
+    });
+
+    return c.json(customer, 201);
+  } catch (error) {
+    return c.json({ error: "Something went wrong", details: error.message }, 500);
   }
-  
-  return c.json(customer);  
 });
+
 
 // JUST  RETRIVE  ALL  THE CUSTOMER
 app.get("/Customer", async (C) => {
@@ -54,7 +58,7 @@ app.get("/Customer/:customerId", async (c) => {
  return c.json(customer,401);
 }
 catch(e){
-  return c.json({message:"ERROR WHILE FETCHING THE DATA"})
+  return c.json({message:"ERROR WHILE FETCHING THE DATA"},400)
 }
 })
 
@@ -71,7 +75,7 @@ app.get('/Customer/:customerId/orders', async (c) => {
 })
 
 //Initailly we are going to register resturants
-app.post("/Restaurants/Register", async (C) =>
+app.post("/Restaurant/Register", async (C) =>
 {
   const  {name, location} = await C.req.json();
   const restaurant = await prisma.restaurants.create({
@@ -81,12 +85,12 @@ app.post("/Restaurants/Register", async (C) =>
     },
   });
  
-  return C.json(restaurant);
+  return C.json({restaurant},201);
 
 });
 
 // RETRIVE  ALL  THE MENU ITEMS THROUGH RESTAURANT ID
-app.get("/Restaurants/:restaurantId/Menu", async (c) => {
+app.get("/Restaurant/:restaurantId/Menu", async (c) => {
   try{
   const {restaurantId} = c.req.param();
 
@@ -96,15 +100,15 @@ app.get("/Restaurants/:restaurantId/Menu", async (c) => {
     },
   });
 
-  return c.json(menu);
+  return c.json({menu},201);
 }
 catch(e){
-  return c.json({message:"ERROR FETCHING MENU "})
+  return c.json({message:"ERROR FETCHING MENU "},400)
 }
 });
 
 //ADDING THE LIST OF ITMES TO THE MENU
-app.post("/Reataurant/:restaurantId/menu", async (c) =>{
+app.post("/Restaurant/:restaurantId/menu", async (c) =>{
   try{
   const {restaurantId} = c.req.param();
 
@@ -119,10 +123,10 @@ app.post("/Reataurant/:restaurantId/menu", async (c) =>{
     },
   });
 
-  return c.json(menu);
+  return c.json({menu},201);
 }
 catch(e){
-  return c.json({message:"ERROR CREATING THE MENU"})
+  return c.json({message:"ERROR CREATING THE MENU"},400)
 }
 });
 
@@ -142,7 +146,7 @@ app.patch("/menu/:menuId", async (c) => {
     data,
   });
 
-  return c.json(update);
+  return c.json({update},201);
 }
 catch(e){
   return c.json({message:"ERROR"},400);
@@ -168,7 +172,7 @@ app.post("/orders", async (c) => {
     },
     include: {order : true}
   });
-  return c.json(order);
+  return c.json({order}, 201);
 }
 catch(error){
   return c.json({message : "ERROR CREATING ORDER"},500);
@@ -185,7 +189,7 @@ app.get("/Orders/:orderId", async (c) => {
       id : orderId,
     }
   });
-  return c.json(order);
+  return c.json({order},201);
 }
 catch(error){
   return c.json({message : "Error fetching order"},500);
@@ -237,7 +241,7 @@ app.get("/menu/top-items", async (c) =>{
       take: 1,
 
       });
-      return c.json(topItems);
+      return c.json({topItems},201);
     }
     catch(error){
       return c.json({message : "Error fetching top items"},500);
