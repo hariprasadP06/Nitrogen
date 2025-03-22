@@ -153,31 +153,62 @@ catch(e){
 }
 });
 
-//ORDERING THE MENU ITEMS
-app.post("/orders", async (c) => {
-  try{
-  const { customerId, restaurantId, items , totalPrice} = await c.req.json();
-  const order = await prisma.orders.create({
-    data: {
-      customerId,
-      restaurantId,
-      totalPrice,
-      order: {
-        create : items.map(({menuItemId, quantity}: {menuItemId: Number , quantity : Number}) =>
-        ({
-          menuItemId,
-          quantity,
-        })),
+app.post("/order", async (c) => {
+  try {
+    const { customerId, restaurantId, items } = await c.req.json();
+
+    // Validate if customer and restaurant exist
+    const customerExists = await prisma.customers.findUnique({ where: { id: customerId } });
+    const restaurantExists = await prisma.restaurants.findUnique({ where: { id: restaurantId } });
+
+    if (!customerExists || !restaurantExists) {
+      return c.json({ message: "Invalid customer or restaurant ID" }, 400);
+    }
+
+    // Fetch menu item prices from the database
+    const menuItems = await prisma.menu_Items.findMany({
+      where: {
+        id: { in: items.map(({ menuItemId }: { menuItemId: string }) => menuItemId) },
+        restaurantId,
       },
-    },
-    include: {order : true}
-  });
-  return c.json({order}, 201);
-}
-catch(error){
-  return c.json({message : "ERROR CREATING ORDER"},500);
-}
+      select: { id: true, price: true },
+    });
+
+    // Validate if all menu items exist
+    if (menuItems.length !== items.length) {
+      return c.json({ message: "Some menu items are invalid or not available in this restaurant" }, 400);
+    }
+
+    // Calculate total price
+    let totalPrice = 0;
+    const orderItems = items.map(({ menuItemId, quantity }: { menuItemId: string; quantity: number }) => {
+      const menuItem = menuItems.find((item) => item.id === menuItemId);
+      if (!menuItem) throw new Error(`Menu item with ID ${menuItemId} not found`);
+      totalPrice += menuItem.price * quantity;
+
+      return { menuItemId, quantity };
+    });
+
+    // Create the order with calculated total price
+    const order = await prisma.orders.create({
+      data: {
+        customerId,
+        restaurantId,
+        totalPrice,
+        order: {
+          create: orderItems,
+        },
+      },
+      include: { order: true },
+    });
+
+    return c.json({ order }, 201);
+  } catch (error) {
+    console.error("Error creating order:", error);
+    return c.json({ message: "Error creating order", details: error.message }, 500);
+  }
 });
+
 
 //RETRIVING THE ORDER BY ID
 app.get("/Orders/:orderId", async (c) => {
