@@ -15,7 +15,7 @@ app.get("/", (c) => {
 });
 
 
-// Initailly we are going to register customer
+// CUSTOMER REGISTRATION
 app.post("/Customer/Register", async (c) => {
   const {name , email, phoneNumber, address} = await c.req.json();
 
@@ -28,7 +28,11 @@ app.post("/Customer/Register", async (c) => {
     },
   });
 
-  return c.json(customer);
+  if(!name || !email || !phoneNumber || !address){
+    return c.json({message:"ALL FIELDS ARE REQUIRED"});
+  }
+  
+  return c.json(customer);  
 });
 
 // JUST  RETRIVE  ALL  THE CUSTOMER
@@ -39,6 +43,7 @@ app.get("/Customer", async (C) => {
 
 // RETRIVE  CUSTOMER BY ID
 app.get("/Customer/:customerId", async (c) => {
+  try{
   const customerId =  c.req.param("customerId");
   const customer = await prisma.customers.findMany({
     where:{
@@ -47,6 +52,10 @@ app.get("/Customer/:customerId", async (c) => {
 });
 
  return c.json(customer,401);
+}
+catch(e){
+  return c.json({message:"ERROR WHILE FETCHING THE DATA"})
+}
 })
 
 //DISPLAY THE CUSTOMER ORDER THROUGH ID 
@@ -78,6 +87,7 @@ app.post("/Restaurants/Register", async (C) =>
 
 // RETRIVE  ALL  THE MENU ITEMS THROUGH RESTAURANT ID
 app.get("/Restaurants/:restaurantId/Menu", async (c) => {
+  try{
   const {restaurantId} = c.req.param();
 
   const menu = await prisma.menu_Items.findMany({
@@ -87,10 +97,15 @@ app.get("/Restaurants/:restaurantId/Menu", async (c) => {
   });
 
   return c.json(menu);
+}
+catch(e){
+  return c.json({message:"ERROR FETCHING MENU "})
+}
 });
 
 //ADDING THE LIST OF ITMES TO THE MENU
 app.post("/Reataurant/:restaurantId/menu", async (c) =>{
+  try{
   const {restaurantId} = c.req.param();
 
   const {name, price, isAvailable} = await c.req.json();
@@ -105,6 +120,10 @@ app.post("/Reataurant/:restaurantId/menu", async (c) =>{
   });
 
   return c.json(menu);
+}
+catch(e){
+  return c.json({message:"ERROR CREATING THE MENU"})
+}
 });
 
 
@@ -152,7 +171,7 @@ app.post("/orders", async (c) => {
   return c.json(order);
 }
 catch(error){
-  return c.json({message : "Error creating order"},500);
+  return c.json({message : "ERROR CREATING ORDER"},500);
 }
 });
 
